@@ -253,7 +253,11 @@ The first startup may take several minutes.
 
 Retrieve the initial administrator password (the exact path depends on your Nexus image and version). Refer to the official Nexus documentation if needed.
 
-Ex: docker exec nexus cat /nexus-data/admin.password
+Example:
+
+```text
+docker exec nexus cat /nexus-data/admin.password
+```
 
 After logging in:
 
