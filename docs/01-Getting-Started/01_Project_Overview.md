@@ -60,10 +60,7 @@ By defining the infrastructure as code, the entire environment can be deployed, 
 
 The infrastructure consists of four primary services running on a shared Docker network.
 
-![Enterprise Architecture](images/architecture-overview.png)
-
-
-> **Note:** Replace this diagram with `architecture-overview.png` once it is added to the `images/` directory.
+![Enterprise Architecture](../../images/architecture-overview.png)
 
 ---
 
