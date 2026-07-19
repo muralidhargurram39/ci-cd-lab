@@ -2,49 +2,77 @@
 
 ## Overview
 
-This guide walks you through the installation and initial configuration of the **Enterprise DevSecOps Infrastructure Platform**.
+This guide explains how to deploy the **Enterprise DevSecOps Infrastructure Platform** using Docker Compose.
 
-By the end of this guide, you will have a fully functional local DevSecOps environment consisting of:
+The platform provisions a complete DevSecOps environment consisting of:
 
-- Jenkins LTS
+- Jenkins LTS (Custom Image)
 - SonarQube Community Edition
+- PostgreSQL Database
 - Nexus Repository OSS
-- Apache Tomcat
-- Docker Compose Networking
+- Apache Tomcat 10
 
-The platform is deployed using Docker Compose, ensuring a consistent and repeatable setup across supported environments.
+Unlike a standard Jenkins deployment, this platform includes a **custom Jenkins image** preconfigured with enterprise DevSecOps tools, enabling CI/CD pipelines to build, scan, package, containerize, and deploy applications without additional tool installation.
 
 ---
 
 # Installation Workflow
 
-The installation process follows the workflow below:
-
 ```
-
 Clone Repository
-↓
+        │
+        ▼
 Review Configuration
-↓
+        │
+        ▼
 Build Custom Jenkins Image
-↓
-Start Docker Compose Services
-↓
-Verify Running Containers
-↓
-Access Service Dashboards
-↓
+        │
+        ▼
+Start Docker Compose Platform
+        │
+        ▼
+Verify Containers
+        │
+        ▼
+Verify Networks & Volumes
+        │
+        ▼
 Initialize Jenkins
-↓
+        │
+        ▼
+Verify SonarQube
+        │
+        ▼
+Verify Nexus Repository
+        │
+        ▼
+Verify Apache Tomcat
+        │
+        ▼
 Platform Ready
-
 ```
+
+---
+
+# Platform Architecture
+
+The platform deploys five core services.
+
+| Service | Purpose |
+|----------|---------|
+| Jenkins | Continuous Integration & DevSecOps Automation |
+| SonarQube | Static Code Analysis |
+| PostgreSQL | SonarQube Database |
+| Nexus Repository OSS | Artifact & Docker Registry |
+| Apache Tomcat | Application Deployment Server |
+
+All services communicate through a dedicated Docker bridge network.
 
 ---
 
 # Step 1 – Clone the Repository
 
-Clone the repository using Git.
+Clone the repository.
 
 ```bash
 git clone git@github.com:muralidhargurram39/ci-cd-lab.git
@@ -52,59 +80,59 @@ git clone git@github.com:muralidhargurram39/ci-cd-lab.git
 cd ci-cd-lab
 ```
 
-Expected directory structure:
+Verify the repository structure.
 
 ```text
 ci-cd-lab/
 ├── docker-compose.yml
+├── README.md
+├── docs/
+├── images/
 ├── jenkins/
 ├── nexus/
 ├── sonarqube/
-├── tomcat/
-├── docs/
-└── images/
+└── tomcat/
 ```
 
 ---
 
-# Step 2 – Review the Docker Compose Configuration
+# Step 2 – Review Docker Compose Configuration
 
-Open the Docker Compose file.
+Review the Docker Compose file.
 
 ```bash
 cat docker-compose.yml
 ```
 
-Verify that the services include:
+The platform deploys the following services.
 
-- Jenkins
-- SonarQube
-- Nexus Repository
-- Apache Tomcat
+| Service | Container |
+|----------|-----------|
+| Jenkins | jenkins |
+| SonarQube | sonarqube |
+| PostgreSQL | sonar-postgres |
+| Nexus Repository | nexus |
+| Tomcat | tomcat |
 
 Review:
 
 - Port mappings
-- Volume mappings
-- Docker network
-- Environment variables
+- Docker networks
+- Persistent volumes
 - Restart policies
-
-If you need to customize ports or paths, update `docker-compose.yml` before proceeding.
+- Environment variables
 
 ---
 
 # Step 3 – Build the Custom Jenkins Image
 
-The platform uses a custom Jenkins image that includes the tools required for CI/CD pipelines.
-
-Build the image:
+Build the Jenkins image.
 
 ```bash
 docker compose build jenkins
 ```
 
-During the build, Docker installs the required components defined in:
+The custom image is built from:
 
 ```text
 jenkins/
@@ -113,323 +141,445 @@ jenkins/
 └── kube/
 ```
 
-Verify the image:
+---
+
+# DevSecOps Toolchain
+
+During the image build, Jenkins is configured with the following tools.
+
+| Category | Installed Tool |
+|----------|----------------|
+| Java | JDK 17 |
+| Build | Maven |
+| Source Control | Git |
+| JavaScript | NodeJS 22 + npm |
+| Containers | Docker CLI |
+| Container Orchestration | Docker Compose |
+| Docker Build | Docker Buildx |
+| Kubernetes | kubectl |
+| Local Kubernetes | Kind |
+| Kubernetes Package Manager | Helm |
+| Cloud | AWS CLI v2 |
+| Security | Trivy |
+| YAML Processing | yq |
+| Utilities | jq |
+| Python | Python 3 + pip |
+
+This transforms Jenkins into a complete enterprise DevSecOps build agent.
+
+---
+
+# Step 4 – Verify Jenkins Image
+
+Verify that the image was successfully built.
 
 ```bash
 docker images
 ```
 
-Expected output should include your custom Jenkins image.
+Expected output:
+
+```text
+custom-jenkins:lts
+```
 
 ---
 
-# Step 4 – Start the Platform
+# Step 5 – Start the Platform
 
-Start all infrastructure services:
+Deploy all services.
 
 ```bash
 docker compose up -d
 ```
 
-Docker Compose will:
+Docker Compose performs the following tasks:
 
-- Create the shared Docker network.
-- Create persistent volumes.
-- Start all configured containers.
-- Apply restart policies.
+- Creates Docker networks
+- Creates persistent volumes
+- Starts PostgreSQL
+- Starts SonarQube
+- Starts Nexus Repository
+- Starts Jenkins
+- Starts Apache Tomcat
 
-Initial startup may take several minutes, especially for SonarQube and Nexus.
+The initial startup may take several minutes.
 
 ---
 
-# Step 5 – Verify Running Containers
+# Step 6 – Verify Running Containers
 
-List the running containers:
+Check running containers.
 
 ```bash
 docker ps
 ```
 
-Expected output should include containers similar to:
+Expected containers:
 
 ```text
 jenkins
 sonarqube
+sonar-postgres
 nexus
 tomcat
 ```
 
-If a container exits unexpectedly, inspect its logs:
-
-```bash
-docker logs <container-name>
-```
-
 ---
 
-# Step 6 – Verify Container Health
-
-Check the status of each service:
+# Step 7 – Verify Container Status
 
 ```bash
 docker compose ps
 ```
 
-All containers should report a running state.
+Every container should report:
 
-If any service is unhealthy, review the logs before continuing.
+```text
+Up
+```
+
+If a container exits unexpectedly:
+
+```bash
+docker logs <container-name>
+```
+
+Example:
+
+```bash
+docker logs sonarqube
+
+docker logs nexus
+
+docker logs jenkins
+```
 
 ---
 
-# Step 7 – Access the Platform
+# Step 8 – Verify Docker Networks
 
-Open the following URLs in your browser:
+List networks.
+
+```bash
+docker network ls
+```
+
+Expected networks include:
+
+- cicd-network
+- kind
+
+Inspect the internal platform network.
+
+```bash
+docker network inspect cicd-network
+```
+
+The `kind` network provides connectivity between Jenkins and your local Kubernetes cluster.
+
+---
+
+# Step 9 – Verify Persistent Volumes
+
+List Docker volumes.
+
+```bash
+docker volume ls
+```
+
+Expected volumes:
+
+| Volume | Purpose |
+|---------|---------|
+| jenkins_home | Jenkins configuration & jobs |
+| sonar_postgres_data | PostgreSQL Database |
+| sonarqube_data | SonarQube Data |
+| sonarqube_logs | SonarQube Logs |
+| sonarqube_extensions | SonarQube Plugins |
+| nexus_data | Nexus Repository Data |
+| tomcat_webapps | Deployed Applications |
+
+---
+
+# Step 10 – Access the Platform
+
+Open the following URLs.
 
 | Service | URL |
 |----------|-----|
 | Jenkins | http://localhost:8080 |
 | SonarQube | http://localhost:9000 |
 | Nexus Repository | http://localhost:8081 |
-| Apache Tomcat | http://localhost:8082 |
-
-The initial startup of SonarQube and Nexus may take a few minutes.
+| Nexus Docker Registry | http://localhost:8082 |
+| Nexus Additional Repository | http://localhost:8083 |
+| Apache Tomcat | http://localhost:9090 |
 
 ---
 
-# Step 8 – Initialize Jenkins
+# Step 11 – Initialize Jenkins
 
-When accessing Jenkins for the first time, an administrator password is required.
-
-Retrieve it using:
+Retrieve the initial administrator password.
 
 ```bash
 docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 ```
 
-> **Note:** Replace `jenkins` with the actual container name if it differs in your `docker-compose.yml`.
+Open:
 
-Copy the password and complete the Jenkins setup wizard.
+```
+http://localhost:8080
+```
 
-Recommended actions:
+Complete the setup wizard:
 
-- Install suggested plugins (or verify that your custom image already includes the required plugins).
-- Create the initial administrator account.
-- Confirm the Jenkins URL.
+- Unlock Jenkins
+- Install plugins (if required)
+- Create administrator account
+- Configure Jenkins URL
 
 ---
 
-# Step 9 – Verify SonarQube
+# Step 12 – Verify Installed DevSecOps Tools
+
+Verify the tools installed inside Jenkins.
+
+```bash
+docker exec jenkins java -version
+
+docker exec jenkins mvn -version
+
+docker exec jenkins docker --version
+
+docker exec jenkins docker compose version
+
+docker exec jenkins docker buildx version
+
+docker exec jenkins kubectl version --client
+
+docker exec jenkins kind version
+
+docker exec jenkins helm version
+
+docker exec jenkins aws --version
+
+docker exec jenkins trivy --version
+
+docker exec jenkins yq --version
+
+docker exec jenkins node --version
+
+docker exec jenkins npm --version
+```
+
+All commands should return version information without errors.
+
+---
+
+# Step 13 – Verify SonarQube
 
 Open:
 
-```text
+```
 http://localhost:9000
 ```
 
 Default credentials:
 
-```text
-Username: admin
-Password: admin
 ```
+Username : admin
+Password : admin
+```
+
+The platform stores SonarQube data in PostgreSQL.
+
+| Property | Value |
+|----------|-------|
+| Database | sonar |
+| Username | sonar |
+| Container | sonar-postgres |
 
 After the first login:
 
-- Change the default password.
-- Verify that the dashboard loads correctly.
-- Confirm that no startup errors are displayed.
+- Change the administrator password.
+- Verify the dashboard loads successfully.
+- Confirm there are no startup errors.
 
 ---
 
-# Step 10 – Verify Nexus Repository
+# Step 14 – Verify Nexus Repository
 
 Open:
 
-```text
+```
 http://localhost:8081
 ```
 
-The first startup may take several minutes.
+Retrieve the administrator password.
 
-Retrieve the initial administrator password (the exact path depends on your Nexus image and version). Refer to the official Nexus documentation if needed.
-
-Example:
-
-```text
+```bash
 docker exec nexus cat /nexus-data/admin.password
 ```
 
 After logging in:
 
-- Change the default password.
-- Configure repositories as required.
-- Verify that the repository manager is operational.
+- Change the administrator password.
+- Verify repository manager status.
+- Confirm repositories are available.
 
 ---
 
-# Step 11 – Verify Apache Tomcat
+# Step 15 – Verify Apache Tomcat
 
 Open:
 
-```text
-http://localhost:8082
+```
+http://localhost:9090
 ```
 
 Verify:
 
-- Tomcat home page loads successfully.
-- Manager application is accessible (if enabled).
-- Configured users and roles work as expected.
+- Default Tomcat page loads.
+- Web application directory is accessible.
+- Deployment directory is writable.
 
 ---
 
-# Step 12 – Verify Docker Network
+# Jenkins Plugins
 
-List Docker networks:
+The custom Jenkins image includes the following plugins.
 
-```bash
-docker network ls
-```
-
-Inspect the network created by Docker Compose:
-
-```bash
-docker network inspect <network-name>
-```
-
-Confirm that all services are attached to the same network.
-
----
-
-# Step 13 – Verify Persistent Volumes
-
-List Docker volumes:
-
-```bash
-docker volume ls
-```
-
-Verify that persistent volumes exist for services that require data retention.
+| Category | Plugins |
+|----------|----------|
+| SCM | Git, Git Client, GitHub |
+| Pipeline | Workflow Aggregator, Pipeline Graph View |
+| Credentials | Credentials, SSH Agent |
+| Security | Matrix Authorization, Role Strategy |
+| Docker | Docker Workflow |
+| Quality | SonarQube Scanner |
+| Artifact Repository | Nexus Artifact Uploader |
+| Configuration | Configuration as Code, Job DSL |
+| UI | Blue Ocean |
 
 ---
 
 # Installation Verification Checklist
 
-Before proceeding to pipeline configuration, confirm:
+Confirm the following before continuing.
 
 | Verification | Status |
 |--------------|:------:|
 | Repository cloned | ☐ |
 | Jenkins image built | ☐ |
 | Docker Compose started | ☐ |
-| All containers running | ☐ |
+| Jenkins running | ☐ |
+| SonarQube running | ☐ |
+| PostgreSQL running | ☐ |
+| Nexus running | ☐ |
+| Tomcat running | ☐ |
+| Docker networks created | ☐ |
+| Docker volumes created | ☐ |
 | Jenkins accessible | ☐ |
 | SonarQube accessible | ☐ |
 | Nexus accessible | ☐ |
 | Tomcat accessible | ☐ |
-| Docker network created | ☐ |
-| Persistent volumes created | ☐ |
+| DevSecOps tools verified | ☐ |
 
 ---
 
 # Stopping the Platform
 
-To stop all services:
+Stop all services.
 
 ```bash
 docker compose down
 ```
-
-To stop services while preserving persistent data:
-
-```bash
-docker compose down
-```
-
-Docker volumes are retained unless explicitly removed.
 
 ---
 
-# Removing the Platform
+# Remove the Platform
 
-To remove containers, networks, and associated volumes:
+Remove containers, networks and persistent volumes.
 
 ```bash
 docker compose down -v
 ```
 
-> **Warning:** This permanently deletes data stored in Docker volumes.
+> **Warning:** This permanently removes all platform data stored in Docker volumes.
 
 ---
 
 # Common Issues
 
-## Jenkins takes a long time to start
+## Jenkins does not start
 
-This is normal during the first startup while Jenkins completes initialization.
-
----
-
-## SonarQube fails to start
-
-Possible causes:
-
-- Insufficient memory
-- Existing port conflicts
-- Docker resource limits
-
-Increase the Docker memory allocation and restart the service.
-
----
-
-## Nexus startup is slow
-
-Nexus performs repository initialization during its first launch.
-
-Wait until the logs indicate that the application has started successfully.
-
----
-
-## Port conflict
-
-Check which process is using the port:
+Check:
 
 ```bash
-sudo lsof -i :8080
+docker logs jenkins
 ```
-
-Update the port mapping in `docker-compose.yml` if necessary.
 
 ---
 
-## Docker build fails
+## SonarQube initialization is slow
 
-Rebuild the images:
+The first startup performs database initialization. Wait until the logs indicate that SonarQube is fully operational.
+
+---
+
+## Nexus takes several minutes to start
+
+Nexus performs repository initialization during the first launch. This behavior is expected.
+
+---
+
+## Docker socket permission issues
+
+Verify that the Docker socket is mounted correctly.
 
 ```bash
-docker compose build --no-cache
+ls -l /var/run/docker.sock
 ```
+
+Ensure the Jenkins container has access to the Docker group.
+
+---
+
+## Kind network not found
+
+If Docker Compose reports:
+
+```
+Network kind declared as external but could not be found
+```
+
+Create the Kind cluster (or its Docker network) before starting the platform.
 
 ---
 
 # Best Practices
 
 - Build the custom Jenkins image before starting the platform.
-- Verify all services are healthy before configuring integrations.
+- Keep the Docker Compose file under version control.
 - Avoid modifying container data directly.
-- Keep Docker Compose configuration under version control.
-- Regularly pull the latest repository changes before upgrades.
+- Back up Docker volumes regularly.
+- Update the custom Jenkins image periodically to keep tools current.
+- Monitor container logs after upgrades.
+- Verify tool versions after rebuilding the Jenkins image.
 
 ---
 
 # Summary
 
-You have successfully deployed the Enterprise DevSecOps Infrastructure Platform and verified that all core services are operational.
+You have successfully deployed the **Enterprise DevSecOps Infrastructure Platform** and verified that all core services are operational.
 
-The platform is now ready for configuration and integration.
+The platform now provides:
 
-Continue with:
+- A fully equipped Jenkins DevSecOps build agent
+- SonarQube with PostgreSQL backend
+- Nexus Repository OSS
+- Apache Tomcat deployment server
+- Shared Docker networking
+- Persistent storage for all stateful services
 
-**04_Repository_Structure.md**
-
-to understand the purpose and organization of every directory and configuration file in the repository before configuring Jenkins, SonarQube, Nexus Repository, and Apache Tomcat.
+Continue with **04_Repository_Structure.md** to understand the purpose of each directory, configuration file, and component within the repository before configuring pipelines and integrations.
