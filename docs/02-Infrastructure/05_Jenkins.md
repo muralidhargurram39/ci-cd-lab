@@ -32,7 +32,7 @@ Primary responsibilities include:
 
 # Architecture
 
-![Pipeline](images/jenkins-pipeline-flow.png)
+![Pipeline](../images/jenkins-pipeline-flow.png)
 
 ---
 
