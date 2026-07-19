@@ -8,7 +8,7 @@ This documentation explains how to install, configure, maintain, and troubleshoo
 
 ## Getting Started
 
-- [01 Project Overview](01_Project_Overview.md)
+- [01 Project Overview](/docs/01-Getting-Started/01_Project_Overview.md)
 - [02 Prerequisites](02_Prerequisites.md)
 - [03 Installation Guide](03_Installation_Guide.md)
 
